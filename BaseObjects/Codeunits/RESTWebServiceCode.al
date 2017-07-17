@@ -2,46 +2,46 @@ codeunit 70060000 RESTWebServiceCode
 {
   procedure CallRESTWebService(var Parameters : Record RESTWebServiceArguments) : Boolean
   var
-      HttpClient : HttpClient;
+      Client : HttpClient;
       AuthHeaderValue : HttpHeaders;
-      HttpHeaders : HttpHeaders;
-      HttpRequestMessage : HttpRequestMessage ;
-      HttpResponseMessage : HttpResponseMessage;
-      HttpContent : HttpContent;
+      Headers : HttpHeaders;
+      RequestMessage : HttpRequestMessage ;
+      ResponseMessage : HttpResponseMessage;
+      Content : HttpContent;
       AuthText : text;
       TempBlob : Record TempBlob temporary;
   begin
-      HttpRequestMessage.Method := Format(Parameters.RestMethod);
-      HttpRequestMessage.SetRequestUri(Parameters.URL);
+      RequestMessage.Method := Format(Parameters.RestMethod);
+      RequestMessage.SetRequestUri(Parameters.URL);
 
-      HttpRequestMessage.GetHeaders(HttpHeaders);
+      RequestMessage.GetHeaders(Headers);
 
       if Parameters.Accept <> '' then
-          HttpHeaders.Add('Accept',Parameters.Accept);
+          Headers.Add('Accept',Parameters.Accept);
 
       if Parameters.UserName <> '' then begin
           AuthText := StrSubstNo('%1:%2',Parameters.UserName,Parameters.Password);
           TempBlob.WriteAsText(AuthText,TextEncoding::Windows);
-          HttpHeaders.Add('Authorization', StrSubstNo('Basic %1',TempBlob.ToBase64String()));
+          Headers.Add('Authorization', StrSubstNo('Basic %1',TempBlob.ToBase64String()));
       end;      
 
       if Parameters.ETag <> '' then
-          HttpHeaders.Add('If-Match', Parameters.ETag);
+          Headers.Add('If-Match', Parameters.ETag);
       
       if Parameters.HasRequestContent then begin
-          Parameters.GetRequestContent(HttpContent);
-          HttpRequestMessage.Content := HttpContent;
+          Parameters.GetRequestContent(Content);
+          RequestMessage.Content := Content;
       end;      
 
-      HttpClient.Send(HttpRequestMessage, HttpResponseMessage);
+      Client.Send(RequestMessage, ResponseMessage);
 
-      HttpHeaders := HttpResponseMessage.Headers;
-      Parameters.SetResponseHeaders(HttpHeaders);
+      Headers := ResponseMessage.Headers;
+      Parameters.SetResponseHeaders(Headers);
 
-      HttpContent := HttpResponseMessage.Content;
-      Parameters.SetResponseContent(HttpContent);
+      Content := ResponseMessage.Content;
+      Parameters.SetResponseContent(Content);
 
-      EXIT(HttpResponseMessage.IsSuccessStatusCode);
+      EXIT(ResponseMessage.IsSuccessStatusCode);
   end;
 }
 
